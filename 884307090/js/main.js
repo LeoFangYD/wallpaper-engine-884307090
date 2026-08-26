@@ -63,12 +63,12 @@ var bgStyle = 1;
 
 //樱花
 var showSakura = true;
-var sakuratransparency = 0.15;
-var sakuraBackground = true;
-var sakuraBackColor = true;
-var sakuraReverse = false;
+var sakuratransparency = 0.40;
+var sakuraBackground = false;
+var sakuraBackColor = false;
+var sakuraReverse = true;
 var sakuraPointNumber = 300;
-var sakuraBackLight = 1/100.0;
+var sakuraBackLight = 0.50;
 
 //时间相关
 var timetransparency = 0.8;

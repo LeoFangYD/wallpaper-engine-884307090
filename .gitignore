@@ -1,0 +1,14 @@
+# 调试备份
+*.bak-*
+*.backup
+
+# Windows/Microsoft 字体不提交公开仓库
+fonts/*.TTF
+fonts/*.TTC
+fonts/*.ttf
+fonts/*.ttc
+fonts/*.OTF
+fonts/*.otf
+
+# 编译产物
+build/

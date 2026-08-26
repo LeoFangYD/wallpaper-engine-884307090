@@ -238,6 +238,48 @@ function style3(){
 }
 
 resize();
+
+/* ===== Linux PWCircle compatibility =====
+ *
+ * Windows Wallpaper Engine normally injects these values through
+ * wallpaperPropertyListener before the visualizer starts.
+ *
+ * linux-wallpaperengine Web mode currently does not initialize all
+ * of those properties, so provide the original visualizer with sane
+ * defaults here.
+ */
+
+// 180 gives the original smooth full circle geometry.
+if (typeof param.PolygonAngle === 'undefined') {
+    param.PolygonAngle = 180;
+}
+
+// 1 = outward waveform. With zero audio this becomes a static ring.
+if (typeof param.direction === 'undefined') {
+    param.direction = 1;
+}
+
+if (typeof param.style === 'undefined') {
+    param.style = 1;
+}
+
+if (typeof param.showCircle === 'undefined') {
+    param.showCircle = true;
+}
+
+if (typeof param.ColorMode === 'undefined') {
+    param.ColorMode = 1;
+}
+
+// Wallpaper Engine compatibility API.
+// Store the callback so linux-wallpaperengine's CEF audio bridge
+// can call exactly the same listener.
+if (typeof window.wallpaperRegisterAudioListener !== 'function') {
+    window.wallpaperRegisterAudioListener = function(callback) {
+        window.__linuxWallpaperEngineAudioListener = callback;
+    };
+}
+
 //function PWCInit(){
 	//resize();
 	//window.onresize = resize;
@@ -246,7 +288,7 @@ resize();
 //}
 //PWCInit();
 
-window.wallpaperRegisterAudioListener && window.wallpaperRegisterAudioListener(wallpaperAudioListener);
+window.wallpaperRegisterAudioListener(wallpaperAudioListener);
 
 
 function wallpaperAudioListener(arr){
@@ -309,3 +351,16 @@ function auto(){
  requestAnimFrame(auto);
  }
  auto();*/
+
+/* Linux: draw the idle ring immediately.
+ * Wallpaper Engine normally starts sending audio frames even when
+ * the spectrum is zero. Do the same here so silence still shows the ring.
+ */
+(function () {
+    var silentSpectrum = new Array(128);
+    for (var i = 0; i < 128; i++) {
+        silentSpectrum[i] = 0;
+    }
+    wallpaperAudioListener(silentSpectrum);
+})();
+

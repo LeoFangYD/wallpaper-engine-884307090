@@ -79,6 +79,153 @@ function oClockInit(){
 }
 
 oClockInit();
+
+/* ===== Linux Web Wallpaper default layout =====
+ * linux-wallpaperengine 当前没有把 Web wallpaper properties
+ * 调用到 wallpaperPropertyListener，所以在这里直接应用原项目
+ * tX/tY/DateX/DateY/tSize/DateSize 的等效默认值。
+ */
+
+/* ===== Linux exact group centering ===== */
+
+/*
+ * 时间和日期要：
+ * 1. 共用同一个左边缘
+ * 2. 整组实际文字宽度的中心 = PWCircle 圆心
+ */
+function recenterLinuxClockGroup() {
+    if (!oClock || !oDate) return;
+
+    requestAnimationFrame(function() {
+
+        /*
+         * 改为真实内容尺寸布局：
+         *
+         * 10 : 00 43
+         * 2026/8/26 Wednesday
+         *
+         * 两行左边缘一致，中间不额外留空。
+         */
+
+        oClock.style.width = 'auto';
+        oClock.style.height = 'auto';
+        oClock.style.lineHeight = '1';
+
+        oDate.style.width = 'auto';
+        oDate.style.height = 'auto';
+        oDate.style.lineHeight = '1';
+
+        oClock.style.textAlign = 'left';
+        oDate.style.textAlign = 'left';
+
+        var clockRect = oClock.getBoundingClientRect();
+        var dateRect  = oDate.getBoundingClientRect();
+
+        var clockWidth  = Math.ceil(clockRect.width);
+        var clockHeight = Math.ceil(clockRect.height);
+
+        var dateWidth   = Math.ceil(dateRect.width);
+        var dateHeight  = Math.ceil(dateRect.height);
+
+        if (clockWidth <= 0 || dateWidth <= 0) return;
+
+        var groupWidth  = Math.max(clockWidth, dateWidth);
+
+        /*
+         * 不额外加 gap。
+         * 日期直接接在时间下面。
+         */
+        var groupHeight = clockHeight + dateHeight;
+
+        var cx = 0.5;
+        var cy = 0.5;
+
+        if (typeof param !== 'undefined') {
+            if (typeof param.cX === 'number') cx = param.cX;
+            if (typeof param.cY === 'number') cy = param.cY;
+        }
+
+        var centerX = window.innerWidth  * cx;
+        var centerY = window.innerHeight * cy;
+
+        /*
+         * 整个两行文字块中心对准声纹圆心。
+         */
+        var groupLeft = Math.round(centerX - groupWidth / 2);
+        var groupTop  = Math.round(centerY - groupHeight / 2);
+
+        /*
+         * 两行共用同一个左边缘。
+         */
+        oClock.style.left = groupLeft + 'px';
+        oDate.style.left  = groupLeft + 'px';
+
+        /*
+         * 日期紧贴时间下一行。
+         */
+        oClock.style.top = groupTop + 'px';
+        oDate.style.top  = (groupTop + clockHeight) + 'px';
+    });
+}
+
+function applyLinuxDefaultLayout() {
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+
+    /*
+     * 原壁纸已有日期格式 15：
+     * YYYY/MM/DD + English weekday
+     *
+     * 实际效果：
+     * 2026/8/26 Wednesday
+     */
+    DateFormatTest = 15;
+
+    // 24 小时制，并显示秒
+    tStyle = true;
+    tShowSencends = true;
+
+    /*
+     * 时间和日期共用一个居中的“文字区域”，
+     * 但区域内部左对齐。
+     */
+    var blockWidth = Math.min(760, Math.floor(w * 0.42));
+    var blockLeft = Math.floor((w - blockWidth) / 2);
+
+    // 时间
+    oClock.style.width = blockWidth + 'px';
+    oClock.style.left = blockLeft + 'px';
+    oClock.style.top = '-5%';
+    oClock.style.textAlign = 'left';
+    oClock.style.fontSize = Math.floor(h / 300 * 18) + 'px';
+    oClock.style.color = '#ffffff';
+    oClock.style.textShadow = '0 0 20px rgba(255,255,255,0.85)';
+    oClock.style.opacity = '1';
+
+    // 日期
+    oDate.style.width = blockWidth + 'px';
+    oDate.style.left = blockLeft + 'px';
+    oDate.style.top = '7%';
+    oDate.style.textAlign = 'left';
+    oDate.style.fontSize = Math.floor(h / 300 * 15) + 'px';
+    oDate.style.color = '#ffffff';
+    oDate.style.textShadow = '0 0 16px rgba(255,255,255,0.80)';
+    oDate.style.opacity = '1';
+
+    // Linux 下继续关闭旧天气接口
+    weather.style.display = 'none';
+
+    // 等字体和文字真正完成布局以后再进行精确居中
+    setTimeout(recenterLinuxClockGroup, 0);
+}
+
+applyLinuxDefaultLayout();
+
+window.addEventListener('resize', function() {
+    oClockInit();
+    applyLinuxDefaultLayout();
+});
+
 //window.onresize = oClockInit;
 
 /*
@@ -216,6 +363,11 @@ function getTime(){
 }
 function autoTime(){
     getTime();
+
+    // 数字变化后重新测量实际文字宽度，
+    // 保证整组始终严格位于声纹圆心。
+    recenterLinuxClockGroup();
+
     setTimeout(autoTime, 1000);
 }
 function add0(n){
