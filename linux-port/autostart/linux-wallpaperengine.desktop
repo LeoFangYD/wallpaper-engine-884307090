@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Wallpaper Engine
+Comment=Wallpaper Engine with automatic restart
+Exec=/home/qy/linux-wallpaperengine/wallpaper-watchdog.sh
+Terminal=false
+StartupNotify=false
+X-GNOME-Autostart-enabled=true

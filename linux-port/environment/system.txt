@@ -1,0 +1,27 @@
+=== Archive date ===
+Wed Aug 26 11:04:51 AM CST 2026
+
+=== Ubuntu ===
+Distributor ID:	Ubuntu
+Description:	Ubuntu 22.04.5 LTS
+Release:	22.04
+Codename:	jammy
+
+=== Kernel ===
+Linux qy-MS-7E07 6.8.0-138-generic #138~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Aug  7 13:43:15 UTC  x86_64 x86_64 x86_64 GNU/Linux
+
+=== Desktop ===
+XDG_SESSION_TYPE=x11
+XDG_CURRENT_DESKTOP=ubuntu:GNOME
+GNOME Shell 42.9
+
+=== GPU ===
+NVIDIA GeForce RTX 4070 Ti, 580.173.02
+
+=== Compiler ===
+gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+cmake version 3.22.1
+
+=== Fonts ===
+DENGL.TTF: "DengXian" "Light"
+MSYHL.TTC: "Microsoft YaHei" "Light"
