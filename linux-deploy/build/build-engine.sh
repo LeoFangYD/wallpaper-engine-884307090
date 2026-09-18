@@ -17,7 +17,23 @@
 set -u
 
 HERE="$(cd "$(dirname "$0")" && pwd -P)"
-. "$HERE/../lib/common.sh"
+# 本脚本有两个合法位置：
+#   1) 仓库内 linux-deploy/build/     -> 公共库在 ../lib/common.sh
+#   2) 安装后的 <ROOT>/bin/           -> 公共库就在同目录 common.sh
+if [ -r "$HERE/common.sh" ]; then
+    . "$HERE/common.sh"
+else
+    . "$HERE/../lib/common.sh"
+fi
+
+# 依赖清单位置（安装后的副本可能没有 deps/，此时只给通用命令）
+if [ -r "$HERE/deps/ubuntu-22.04.txt" ]; then
+    DEP_FILE="$HERE/deps/ubuntu-22.04.txt"
+elif [ -r "$HERE/../deps/ubuntu-22.04.txt" ]; then
+    DEP_FILE="$HERE/../deps/ubuntu-22.04.txt"
+else
+    DEP_FILE=""
+fi
 
 CLEAN=0
 JOBS="$(nproc 2>/dev/null || echo 4)"
@@ -37,10 +53,15 @@ for c in cmake g++ make tar bzip2 patch; do
     wpe_have "$c" || MISSING+=("$c")
 done
 if [ ${#MISSING[@]} -gt 0 ]; then
-    wpe_die "缺少编译工具: ${MISSING[*]}
+    if [ -n "$DEP_FILE" ]; then
+        wpe_die "缺少编译工具: ${MISSING[*]}
 请先安装（Ubuntu 22.04）:
-  sudo apt-get install -y \$(grep -v '^#' $HERE/../deps/ubuntu-22.04.txt | tr '\\n' ' ')
-或直接运行: $HERE/../install.sh --install-deps"
+  sudo apt-get install -y \$(grep -v '^#' $DEP_FILE | tr '\\n' ' ')
+或在仓库目录里运行: linux-deploy/install.sh --install-deps"
+    else
+        wpe_die "缺少编译工具: ${MISSING[*]}
+请安装 build-essential / cmake 等编译依赖（清单见仓库 linux-deploy/deps/）"
+    fi
 fi
 
 [ -d "$WPE_SRC_DIR" ] || wpe_die "源码目录不存在: $WPE_SRC_DIR
@@ -85,7 +106,7 @@ if [ -x "$WPE_ENGINE_BIN" ]; then
     echo "✓ 编译完成: $WPE_ENGINE_BIN"
     ls -la "$(dirname "$WPE_ENGINE_BIN")" | head -n 8
     echo
-    echo "下一步: $HERE/../scripts/doctor.sh  然后  $HERE/../scripts/start-wallpaper.sh"
+    echo "下一步: $WPE_BIN_DIR/doctor.sh  然后  $WPE_BIN_DIR/start-wallpaper.sh"
 else
     wpe_die "编译流程结束但没有生成 $WPE_ENGINE_BIN，请检查日志: $LOG"
 fi

@@ -66,7 +66,7 @@ cd wallpaper-engine-884307090
 | 连 watchdog 一起停 | `<ROOT>/bin/stop-wallpaper.sh --watchdog` |
 | 看状态与日志尾部 | `<ROOT>/bin/status-wallpaper.sh` |
 | 环境体检 | `<ROOT>/bin/doctor.sh` |
-| 编译引擎 | `linux-deploy/build/build-engine.sh [--clean] [--jobs N]` |
+| 编译引擎 | `<ROOT>/bin/build-engine.sh [--clean] [--jobs N]`（仓库内同名脚本在 `linux-deploy/build/`） |
 | 卸载 | `linux-deploy/uninstall.sh` |
 
 > `<ROOT>` 默认是 `~/.local/share/wallpaper-engine-linux`。

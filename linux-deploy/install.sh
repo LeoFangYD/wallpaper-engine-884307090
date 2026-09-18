@@ -178,6 +178,8 @@ fi
 step 5/9 "安装启停脚本"
 cp -a "$HERE/lib/." "$WPE_ROOT/bin/" || die "复制 lib 失败"
 cp -a "$HERE/scripts/." "$WPE_ROOT/bin/" || die "复制 scripts 失败"
+# 编译脚本也装进 bin：这样安装后即使仓库被删，也能在 <ROOT>/bin 里重新编译
+cp -a "$HERE/build/build-engine.sh" "$WPE_ROOT/bin/" || die "复制 build-engine.sh 失败"
 chmod +x "$WPE_ROOT/bin"/*.sh
 ok "脚本已安装: $(ls "$WPE_ROOT/bin" | tr '\n' ' ')"
 
@@ -194,7 +196,7 @@ elif [ -x "$WPE_ROOT/build/output/linux-wallpaperengine" ]; then
 else
     warn "还没有编译产物（$WPE_ROOT/build/output/linux-wallpaperengine 不存在）"
     info "接下来需要二选一："
-    info "  1) 编译: $HERE/build/build-engine.sh   （首次会联网下载 CEF，约需 10GB 磁盘、10~30 分钟）"
+    info "  1) 编译: $WPE_ROOT/bin/build-engine.sh   （首次会联网下载 CEF，约需 10GB 磁盘、10~30 分钟）"
     info "  2) 复用: 重跑本脚本并加 --reuse-build <已有 build 目录的绝对路径>"
 fi
 

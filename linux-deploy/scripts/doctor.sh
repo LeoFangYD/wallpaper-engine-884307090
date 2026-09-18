@@ -34,7 +34,7 @@ if [ -x "$WPE_ENGINE_BIN" ]; then
     ok "引擎可执行: $WPE_ENGINE_BIN"
     [ -f "$(dirname "$WPE_ENGINE_BIN")/libcef.so" ] && ok "CEF 运行时 libcef.so 存在" || bad "缺少 libcef.so（编译未完成？）"
 else
-    bad "引擎未编译: $WPE_ENGINE_BIN -> 运行 build/build-engine.sh"
+    bad "引擎未编译: $WPE_ENGINE_BIN -> 运行 $WPE_BIN_DIR/build-engine.sh"
 fi
 if WP="$(wpe_resolve_wallpaper)"; then
     ok "壁纸目录: $WP"
