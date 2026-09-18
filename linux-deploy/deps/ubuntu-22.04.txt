@@ -1,0 +1,37 @@
+# 编译 + 运行依赖 (Ubuntu 22.04 / Linux Mint 21 等基于 Debian 12 之前的系统)
+# 安装: sudo apt-get update && sudo apt-get install -y $(grep -v '^#' linux-deploy/deps/ubuntu-22.04.txt | tr '\n' ' ')
+build-essential
+cmake
+git
+git-lfs
+pkg-config
+# --- 引擎编译依赖 ---
+libxrandr-dev
+libxinerama-dev
+libxcursor-dev
+libxi-dev
+libgl-dev
+libglew-dev
+freeglut3-dev
+libsdl2-dev
+liblz4-dev
+libavcodec-dev
+libavformat-dev
+libavutil-dev
+libswscale-dev
+libxxf86vm-dev
+libglm-dev
+libglfw3-dev
+libmpv-dev
+libmpv1
+libpulse-dev
+libpulse0
+libfftw3-dev
+libfreetype-dev
+# --- 运行/部署脚本依赖 ---
+wmctrl
+x11-utils
+x11-xserver-utils
+python3
+pulseaudio-utils
+fontconfig

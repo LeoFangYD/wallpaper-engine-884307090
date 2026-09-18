@@ -1,5 +1,10 @@
 # Wallpaper Engine 884307090 - Ubuntu Linux Port
 
+> **⚠️ 本目录是最早的原始归档（历史留存）**
+> 里面的脚本路径写死了 `/home/qy/...`，换一台机器不能直接用。
+> 需要在新机器上部署，请使用 **[`../linux-deploy/`](../linux-deploy/README.md)**
+> —— 一键安装、零硬编码路径、带环境体检与卸载。
+
 这是 Wallpaper Engine Workshop 884307090 的 Ubuntu GNOME X11 完整适配归档。
 
 ## 已实现

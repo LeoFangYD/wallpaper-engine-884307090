@@ -1,0 +1,69 @@
+# ==============================================================================
+# wallpaper.conf — 动态壁纸部署配置
+#
+# 由 install.sh 自动生成到这里：
+#     ~/.config/wallpaper-engine-linux/wallpaper.conf
+# 也可以整体拷到别的机器上，改路径即可。
+#
+# 优先级：本文件 > 环境变量 > common.sh 内置默认值
+# 也就是说：这里写了就以这里为准；这里的路径必须换成目标机器的真实路径。
+#
+# 本文件是 bash 语法，用 # 注释。
+# ==============================================================================
+
+# ---------- 目录 ----------
+# 引擎安装根目录（源码/编译产物/壁纸软链/日志都在其下）
+WPE_ROOT="@WPE_ROOT@"
+
+# 源码目录（install.sh 解压归档源码到这里）
+WPE_SRC_DIR="$WPE_ROOT/src"
+
+# 编译产物目录，最终可执行文件是 $WPE_BUILD_DIR/output/linux-wallpaperengine
+WPE_BUILD_DIR="$WPE_ROOT/build"
+
+# 空 assets 目录（本壁纸是纯 Web 壁纸，不需要 Steam 的 assets）
+WPE_ASSETS_DIR="$WPE_ROOT/empty-assets"
+
+# 壁纸目录（必须含 project.json）。留空则自动在下面这个目录里查找
+WPE_WALLPAPER="@WPE_WALLPAPER@"
+WPE_WALLPAPER_SEARCH="$WPE_ROOT/wallpapers"
+
+# 日志目录（engine.log / watchdog.log，超过 5MB 自动轮转）
+WPE_LOG_DIR="$WPE_ROOT/log"
+
+# ---------- 渲染 ----------
+# 帧率：60 流畅；想省电/降 GPU 占用可改 30
+WPE_FPS="60"
+
+# 用哪块屏幕：
+#   primary            -> 主显示器（默认，自动探测分辨率与位置）
+#   HDMI-0             -> 指定 xrandr 输出名
+#   0x0x2560x1440      -> 直接指定几何 XxYxWxH
+# 留空或写 primary 时，若没有 primary 标记则退化为第一个已连接屏幕
+WPE_MONITOR="primary"
+
+# 可选：完全跳过自动探测，直接写死几何（排查问题时用）
+# WPE_GEOMETRY="0x0x2560x1440"
+
+# 1 = 壁纸不响应鼠标（推荐，避免挡住桌面图标点击）
+WPE_DISABLE_MOUSE="1"
+
+# 引擎额外参数，例如：
+#   WPE_EXTRA_ARGS="--no-audio-processing"      关闭音频可视化
+#   WPE_EXTRA_ARGS="--audio-volume 50"          限制音量
+WPE_EXTRA_ARGS=""
+
+# NVIDIA 专属：0 = 关闭多线程 GL 优化（在 5xx 驱动 + CEF 上更稳）
+WPE_GL_THREADED_OPTIMIZATIONS="0"
+
+# ---------- 守护行为 ----------
+# 连续稳定运行多少秒后清零崩溃计数
+WPE_STABLE_SECONDS="120"
+# 崩溃循环上限：超过后停止自动重启，需手动 start-wallpaper.sh
+WPE_MAX_RESTARTS="5"
+# 每次重启前的等待秒数（给 CEF/OpenGL 初始化留时间）
+WPE_RESTART_DELAY="8"
+# 等待引擎窗口出现的最长秒数
+WPE_STARTUP_TIMEOUT="12"
+# 单个日志文件大小上限（字节），超过就轮转为 .1
+WPE_LOG_MAX_BYTES="5242880"

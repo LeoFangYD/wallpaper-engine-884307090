@@ -1,0 +1,13 @@
+=== GNOME Shell 扩展（桌面图标依赖 ding）===
+ding@rastersoft.com
+ubuntu-appindicators@ubuntu.com
+ubuntu-dock@ubuntu.com
+
+=== dconf: 桌面背景（壁纸模式下背景纯黑，动态壁纸在下方）===
+[/]
+color-shading-type='solid'
+primary-color='#000000'
+secondary-color='#000000'
+=== dconf: DING 桌面图标扩展 ===
+[/]
+icon-size='large'

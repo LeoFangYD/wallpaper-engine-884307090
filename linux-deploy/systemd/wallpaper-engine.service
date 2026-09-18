@@ -1,0 +1,24 @@
+[Unit]
+Description=Wallpaper Engine (linux-wallpaperengine) dynamic wallpaper
+Documentation=https://github.com/LeoFangYD/wallpaper-engine-884307090
+# 注意：本服务依赖 X11（DISPLAY），必须等图形会话起来之后再启动。
+# 默认跟随 graphical-session.target；若你的发行版不支持该 target，
+# 可改成 After=display-manager.service 并自行确认 DISPLAY 可用。
+After=graphical-session.target
+PartOf=graphical-session.target
+Requisite=graphical-session.target
+
+[Service]
+Type=simple
+# 会话是 :0 还是 :1 请用 `echo $DISPLAY` 确认后修改
+Environment=DISPLAY=:0
+# 若提示无法连接 X11，取消下面两行的注释并按实际路径修改：
+# Environment=XAUTHORITY=%h/.Xauthority
+# Environment=XDG_RUNTIME_DIR=/run/user/%U
+ExecStart=%h/.local/share/wallpaper-engine-linux/bin/wallpaper-watchdog.sh
+Restart=on-failure
+RestartSec=10s
+KillMode=mixed
+
+[Install]
+WantedBy=graphical-session.target

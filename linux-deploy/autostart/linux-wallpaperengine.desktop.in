@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Wallpaper Engine
+Name[zh_CN]=Wallpaper Engine 动态壁纸
+Comment=Start Wallpaper Engine (linux-wallpaperengine) with automatic restart
+Comment[zh_CN]=启动动态壁纸并在异常退出后自动重启
+Exec=@WPE_BIN_DIR@/wallpaper-watchdog.sh
+Terminal=false
+StartupNotify=false
+X-GNOME-Autostart-enabled=true
+# 等 GNOME Shell / DING（桌面图标扩展）/ PulseAudio 初始化完成
+X-GNOME-Autostart-Delay=6

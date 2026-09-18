@@ -1,0 +1,36 @@
+# 编译 + 运行依赖 (Ubuntu 24.04 / Debian 13 等新系统)
+# 与 22.04 的唯一区别: libmpv1 -> libmpv2，ffmpeg 相关库版本由系统自带
+# 安装: sudo apt-get update && sudo apt-get install -y $(grep -v '^#' linux-deploy/deps/ubuntu-24.04.txt | tr '\n' ' ')
+build-essential
+cmake
+git
+git-lfs
+pkg-config
+libxrandr-dev
+libxinerama-dev
+libxcursor-dev
+libxi-dev
+libgl-dev
+libglew-dev
+freeglut3-dev
+libsdl2-dev
+liblz4-dev
+libavcodec-dev
+libavformat-dev
+libavutil-dev
+libswscale-dev
+libxxf86vm-dev
+libglm-dev
+libglfw3-dev
+libmpv-dev
+libmpv2
+libpulse-dev
+libpulse0
+libfftw3-dev
+libfreetype-dev
+wmctrl
+x11-utils
+x11-xserver-utils
+python3
+pulseaudio-utils
+fontconfig
