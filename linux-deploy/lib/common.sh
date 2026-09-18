@@ -132,10 +132,22 @@ wpe_resolve_wallpaper() {
     return 1
 }
 
+# 编译脚本的位置：安装后与安装前（仓库内）不同，这里找一个真实存在的
+wpe_build_script() {
+    local c
+    for c in \
+        "$WPE_BIN_DIR/build-engine.sh" \
+        "$WPE_BIN_DIR/build/build-engine.sh" \
+        "$WPE_BIN_DIR/../build/build-engine.sh"; do
+        [ -x "$c" ] && { printf '%s\n' "$(cd "$(dirname "$c")" && pwd -P)/$(basename "$c")"; return 0; }
+    done
+    printf '%s\n' "$WPE_BIN_DIR/build-engine.sh"   # 都没有时给安装后的预期路径
+}
+
 wpe_assert_engine() {
     [ -x "$WPE_ENGINE_BIN" ] || wpe_die "找不到可执行文件: $WPE_ENGINE_BIN
 说明：编译产物没有部署。请执行本套件的编译脚本：
-  $WPE_BIN_DIR/build-engine.sh      （仓库里对应 linux-deploy/build/build-engine.sh）
+  $(wpe_build_script)      （仓库里对应 linux-deploy/build/build-engine.sh）
 或先用 --reuse-build <已编译的 build 目录> 复用其它机器/旧目录的编译结果。"
     [ -f "$(dirname "$WPE_ENGINE_BIN")/libcef.so" ] || wpe_warn "同目录下没有 libcef.so，引擎可能启动失败（CEF 运行时缺失）。"
 }

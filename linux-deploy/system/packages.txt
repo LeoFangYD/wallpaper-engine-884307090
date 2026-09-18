@@ -1,0 +1,47 @@
+=== 依赖包实际版本（name  版本 / (未安装)）===
+build-essential          12.9ubuntu3
+cmake                    3.22.1-1ubuntu1.22.04.2
+fontconfig               2.13.1-4.2ubuntu5
+freeglut3-dev            2.8.1-6
+git                      1:2.34.1-1ubuntu1.17
+git-lfs                  3.0.2-1ubuntu0.3
+libavcodec-dev           7:4.4.2-0ubuntu0.22.04.1
+libavformat-dev          7:4.4.2-0ubuntu0.22.04.1
+libavutil-dev            7:4.4.2-0ubuntu0.22.04.1
+libfftw3-dev             3.3.8-2ubuntu8
+libfreetype-dev          2.11.1+dfsg-1ubuntu0.3
+libgl-dev                1.4.0-1
+libglew-dev              2.2.0-4
+libglfw3-dev             3.3.6-1
+libglm-dev               0.9.9.8+ds-2
+liblz4-dev               1.9.3-2build2
+libmpv1                  0.34.1-1ubuntu3
+libmpv2                  (未安装)
+libmpv-dev               0.34.1-1ubuntu3
+libpulse0                1:15.99.1+dfsg1-1ubuntu2.2
+libpulse-dev             1:15.99.1+dfsg1-1ubuntu2.2
+libsdl2-dev              2.0.20+dfsg-2ubuntu1.22.04.1
+libswscale-dev           7:4.4.2-0ubuntu0.22.04.1
+libxcursor-dev           1:1.2.0-2build4
+libxi-dev                2:1.8-1build1
+libxinerama-dev          2:1.1.4-3
+libxrandr-dev            2:1.5.2-1build1
+libxxf86vm-dev           1:1.1.4-1build3
+pkg-config               0.29.2-1ubuntu3
+pulseaudio-utils         1:15.99.1+dfsg1-1ubuntu2.2
+python3                  3.10.6-1~22.04.1
+wmctrl                   1.07-7build1
+x11-utils                7.7+5build2
+x11-xserver-utils        7.7+9build1
+
+=== 运行时工具 ===
+xrandr       /usr/bin/xrandr
+xprop        /usr/bin/xprop
+wmctrl       /usr/bin/wmctrl
+python3      /usr/bin/python3
+pactl        /usr/bin/pactl
+fc-match     /usr/bin/fc-match
+git          /usr/bin/git
+git-lfs      /usr/bin/git-lfs
+cmake        /usr/bin/cmake
+g++          /usr/bin/g++

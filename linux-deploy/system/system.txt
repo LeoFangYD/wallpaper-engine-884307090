@@ -1,5 +1,5 @@
 === 备份日期 ===
-Fri Sep 18 05:05:05 PM CST 2026
+Fri Sep 18 05:30:22 PM CST 2026
 
 === 系统 ===
 Distributor ID:	Ubuntu
@@ -14,12 +14,13 @@ Linux qy-MS-7E07 6.8.0-138-generic #138~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri A
 XDG_SESSION_TYPE=x11
 XDG_CURRENT_DESKTOP=ubuntu:GNOME
 DISPLAY=:1
+XAUTHORITY=/run/user/1000/gdm/Xauthority
 GNOME Shell 42.9
 
 === GPU / 驱动 ===
-NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running.
-
-NVIDIA GeForce RTX 4070 Ti, 580.173.02 (来自 2026-08-26 归档)
+(nvidia-smi 不可用，改用 lspci / /proc/driver/nvidia/version)
+GPU: 01:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2782] (rev a1)
+驱动: NVRM version: NVIDIA UNIX x86_64 Kernel Module  580.178.04  Tue Jul  7 12:38:21 UTC 2026
 
 === 编译工具 ===
 gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
@@ -31,4 +32,4 @@ HDMI-0 connected primary 2560x1440+0+0 (normal left inverted right x axis y axis
 === 字体 ===
 DENGL.TTF: "DengXian" "Light"
 MSYHL.TTC: "Microsoft YaHei" "Light"
-字体安装位置: /usr/local/share/fonts/microsoft/
+字体安装位置: /usr/local/share/fonts/microsoft

@@ -1,0 +1,39 @@
+--- a/src/WallpaperEngine/Application/WallpaperApplication.cpp
++++ b/src/WallpaperEngine/Application/WallpaperApplication.cpp
+@@ -66,7 +66,23 @@
+     this->initializeSubsystems ();
+     this->loadBackgrounds ();
+     this->setupProperties ();
+-    this->setupBrowser ();
++
++    // CEF subprocesses must enter CefExecuteProcess before initializing
++    // GLFW/OpenGL. The main browser process initializes CEF later, after
++    // the application's OpenGL context has been created.
++    bool isCefSubprocess = false;
++    for (int i = 1; i < context.getArgc (); ++i) {
++        const char* arg = context.getArgv ()[i];
++        if (arg != nullptr && std::string (arg).rfind ("--type=", 0) == 0) {
++            isCefSubprocess = true;
++            break;
++        }
++    }
++
++    if (isCefSubprocess) {
++        this->setupBrowser ();
++    }
++
+     this->initializePlaylists ();
+ }
+ 
+@@ -823,8 +839,11 @@
+ }
+ 
+ void WallpaperApplication::setup () {
++    // Create and make the GLFW/OpenGL context current before initializing
++    // CEF in the main browser process.
+     this->setupOutput ();
+     this->setupAudio ();
++    this->setupBrowser ();
+     this->prepareOutputs ();
+     this->setupOpenGLDebugging ();
+ 

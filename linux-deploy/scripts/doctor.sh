@@ -6,7 +6,13 @@
 # ==============================================================================
 set -u
 
-. "$(cd "$(dirname "$0")" && pwd -P)/common.sh"
+# 公共库：安装后在同目录，仓库内直接运行时在 ../lib
+_wpe_dir="$(cd "$(dirname "$0")" && pwd -P)"
+if [ -r "$_wpe_dir/common.sh" ]; then
+    . "$_wpe_dir/common.sh"
+else
+    . "$_wpe_dir/../lib/common.sh"
+fi
 
 FAIL=0
 ok()   { printf '  ✓ %s\n' "$*"; }
@@ -34,11 +40,40 @@ if [ -x "$WPE_ENGINE_BIN" ]; then
     ok "引擎可执行: $WPE_ENGINE_BIN"
     [ -f "$(dirname "$WPE_ENGINE_BIN")/libcef.so" ] && ok "CEF 运行时 libcef.so 存在" || bad "缺少 libcef.so（编译未完成？）"
 else
-    bad "引擎未编译: $WPE_ENGINE_BIN -> 运行 $WPE_BIN_DIR/build-engine.sh"
+    bad "引擎未编译: $WPE_ENGINE_BIN -> 运行 $(wpe_build_script)"
 fi
 if WP="$(wpe_resolve_wallpaper)"; then
     ok "壁纸目录: $WP"
     [ -f "$WP/project.json" ] && ok "project.json 存在" || bad "缺少 project.json"
+
+    # 素材是否真的下载了（克隆时忘了 git-lfs 会是 130 字节的指针文件，
+    # 症状是壁纸能显示但没声音、声纹圈不动）
+    if [ -d "$WP/audio" ] || [ -d "$WP/video" ]; then
+        LFS_TOTAL=0
+        LFS_PTR=0
+        while IFS= read -r f; do
+            LFS_TOTAL=$((LFS_TOTAL + 1))
+            if head -c 80 "$f" 2>/dev/null | grep -q "git-lfs.github.com/spec"; then
+                LFS_PTR=$((LFS_PTR + 1))
+            fi
+        done < <(find "$WP/audio" "$WP/video" -maxdepth 1 -type f \
+                     \( -name '*.ogg' -o -name '*.OGG' -o -name '*.webm' \) 2>/dev/null)
+        if [ "$LFS_PTR" -gt 0 ]; then
+            bad "素材未下载: $LFS_PTR/$LFS_TOTAL 个音视频是 git-lfs 指针文件（壁纸会没声音、声纹圈不动）"
+            echo "      修复: sudo apt-get install -y git-lfs && git lfs install && git lfs pull"
+        elif [ "$LFS_TOTAL" -gt 0 ]; then
+            ok "音视频素材已就位（$LFS_TOTAL 个文件，非 LFS 指针）"
+        fi
+    fi
+
+    # 壁纸是否是"适配过 Linux"的那一份，而不是原版（原版在 Linux 上排版和声纹都不对）
+    if [ -f "$WP/js/time.js" ]; then
+        if grep -q "Linux exact group centering" "$WP/js/time.js" 2>/dev/null; then
+            ok "壁纸包含 Linux 定制（time.js 居中补丁）"
+        else
+            warn "壁纸看起来是原版：time.js 里没有 Linux 定制标记，排版可能与预期不同"
+        fi
+    fi
 else
     bad "找不到壁纸目录（含 project.json）"
 fi

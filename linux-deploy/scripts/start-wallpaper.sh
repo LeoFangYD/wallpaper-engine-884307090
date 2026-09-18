@@ -10,7 +10,13 @@
 # ==============================================================================
 set -u
 
-. "$(cd "$(dirname "$0")" && pwd -P)/common.sh"
+# 公共库：安装后在同目录，仓库内直接运行时在 ../lib
+_wpe_dir="$(cd "$(dirname "$0")" && pwd -P)"
+if [ -r "$_wpe_dir/common.sh" ]; then
+    . "$_wpe_dir/common.sh"
+else
+    . "$_wpe_dir/../lib/common.sh"
+fi
 
 wpe_prepare
 wpe_rotate_log "$WPE_LOG_FILE"

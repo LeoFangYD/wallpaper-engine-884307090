@@ -11,3 +11,5 @@ secondary-color='#000000'
 === dconf: DING 桌面图标扩展 ===
 [/]
 icon-size='large'
+=== dconf: 界面缩放 ===
+text-scaling-factor: (未设置，使用默认)

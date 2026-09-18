@@ -1,0 +1,30 @@
+--- a/src/WallpaperEngine/WebBrowser/CEF/BrowserApp.cpp
++++ b/src/WallpaperEngine/WebBrowser/CEF/BrowserApp.cpp
+@@ -47,8 +47,23 @@
+ }
+ 
+ void BrowserApp::OnBeforeChildProcessLaunch (CefRefPtr<CefCommandLine> command_line) {
+-    // add back any parameters we had before so the new process can load up everything needed
+-    for (int i = 1; i < this->getApplication ().getContext ().getArgc (); i++) {
+-	command_line->AppendArgument (this->getApplication ().getContext ().getArgv ()[i]);
++    // Do not re-use the raw argv here. argparse may have modified/reordered
++    // those buffers, which corrupts the command line passed to CEF subprocesses.
++    //
++    // A subprocess only needs enough information to reconstruct the wallpaper
++    // project and register its custom wp:// scheme.
++    const auto& context = this->getApplication ().getContext ();
++
++    if (!context.settings.general.assets.empty ()) {
++        command_line->AppendSwitchWithValue (
++            "assets-dir",
++            context.settings.general.assets.string ()
++        );
++    }
++
++    if (!context.settings.general.defaultBackground.empty ()) {
++        command_line->AppendArgument (
++            context.settings.general.defaultBackground.string ()
++        );
+     }
+ }
+\ No newline at end of file

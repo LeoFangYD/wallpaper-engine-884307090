@@ -10,7 +10,13 @@
 # ==============================================================================
 set -u
 
-. "$(cd "$(dirname "$0")" && pwd -P)/common.sh"
+# 公共库：安装后在同目录，仓库内直接运行时在 ../lib
+_wpe_dir="$(cd "$(dirname "$0")" && pwd -P)"
+if [ -r "$_wpe_dir/common.sh" ]; then
+    . "$_wpe_dir/common.sh"
+else
+    . "$_wpe_dir/../lib/common.sh"
+fi
 
 START="$WPE_BIN_DIR/start-wallpaper.sh"
 mkdir -p "$WPE_RUNTIME_DIR" "$WPE_LOG_DIR" 2>/dev/null || true

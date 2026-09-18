@@ -1,0 +1,81 @@
+--- a/src/WallpaperEngine/Render/Wallpapers/CWeb.cpp
++++ b/src/WallpaperEngine/Render/Wallpapers/CWeb.cpp
+@@ -7,6 +7,10 @@
+ #include "WallpaperEngine/Data/Model/Project.h"
+ #include "WallpaperEngine/Data/Model/Wallpaper.h"
+ 
++#include <algorithm>
++#include <iomanip>
++#include <sstream>
++
+ using namespace WallpaperEngine::Render;
+ using namespace WallpaperEngine::Render::Wallpapers;
+ 
+@@ -78,6 +82,67 @@
+     // But for now let it be like this
+     //  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+     CefDoMessageLoopWork ();
++
++    /*
++     * Web wallpaper audio bridge
++     *
++     * Wallpaper Engine Web wallpapers normally receive a 128-value
++     * audio spectrum through wallpaperRegisterAudioListener().
++     *
++     * linux-wallpaperengine already captures the system output through
++     * PulseAudio and exposes a 64-band FFT. Feed that data into this
++     * wallpaper's existing wallpaperAudioListener().
++     *
++     * The recorder is mono, so duplicate the 64 bands into two halves
++     * to mimic Wallpaper Engine's 128-value stereo spectrum.
++     */
++    static unsigned int audioDispatchFrame = 0;
++
++    // 60 FPS renderer -> send audio at ~30 Hz.
++    if ((++audioDispatchFrame % 2) == 0 && this->m_browser) {
++        auto frame = this->m_browser->GetMainFrame ();
++
++        if (frame) {
++            auto& recorder = this->getAudioContext ().getRecorder ();
++
++            std::ostringstream js;
++            js << std::fixed << std::setprecision (4);
++
++            js <<
++                "(function(a){"
++                "var cb=null;"
++                "if(typeof window.__linuxWallpaperEngineAudioListener==='function')"
++                "cb=window.__linuxWallpaperEngineAudioListener;"
++                "else if(typeof window.wallpaperAudioListener==='function')"
++                "cb=window.wallpaperAudioListener;"
++                "if(cb)cb(a);"
++                "})([";
++
++            for (int i = 0; i < 128; ++i) {
++                if (i != 0) {
++                    js << ",";
++                }
++
++                // Wallpaper Engine Web API uses 128 values.
++                // Duplicate the mono 64-band spectrum as L/R.
++                const float value = std::clamp (
++                    recorder.audio64[i % 64],
++                    0.0f,
++                    1.0f
++                );
++
++                js << value;
++            }
++
++            js << "]);";
++
++            frame->ExecuteJavaScript (
++                js.str (),
++                "linux-wallpaperengine://audio",
++                1
++            );
++        }
++    }
+ }
+ 
+ void CWeb::updateMouse (const glm::ivec4& viewport) {

@@ -9,7 +9,13 @@
 # ==============================================================================
 set -u
 
-. "$(cd "$(dirname "$0")" && pwd -P)/common.sh"
+# 公共库：安装后在同目录，仓库内直接运行时在 ../lib
+_wpe_dir="$(cd "$(dirname "$0")" && pwd -P)"
+if [ -r "$_wpe_dir/common.sh" ]; then
+    . "$_wpe_dir/common.sh"
+else
+    . "$_wpe_dir/../lib/common.sh"
+fi
 
 STOP_WATCHDOG=0
 [ "${1:-}" = "--watchdog" ] && STOP_WATCHDOG=1
@@ -39,7 +45,8 @@ if [ "$STOP_WATCHDOG" = "1" ]; then
         fi
         rm -f "$WPE_WATCHDOG_PIDFILE"
     else
-        pkill -f -- "$WPE_BIN_DIR/wallpaper-watchdog.sh" 2>/dev/null || true
+        # 没有 pidfile（例如 watchdog 是手动启动的）：按脚本名兜底
+        pkill -f -- "wallpaper-watchdog\.sh" 2>/dev/null || true
         echo "watchdog 已停止。"
     fi
 else

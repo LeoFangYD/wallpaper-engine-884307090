@@ -14,6 +14,8 @@
 ## 一键部署（新机器）
 
 ```bash
+# 先装 git-lfs（音视频素材走 LFS，漏装会没声音）
+sudo apt-get install -y git-lfs
 git clone -b linux-ubuntu2204 https://github.com/LeoFangYD/wallpaper-engine-884307090.git
 cd wallpaper-engine-884307090
 
@@ -67,6 +69,8 @@ cd wallpaper-engine-884307090
 | 看状态与日志尾部 | `<ROOT>/bin/status-wallpaper.sh` |
 | 环境体检 | `<ROOT>/bin/doctor.sh` |
 | 编译引擎 | `<ROOT>/bin/build-engine.sh [--clean] [--jobs N]`（仓库内同名脚本在 `linux-deploy/build/`） |
+| 刷新设置快照 | `linux-deploy/system/collect.sh` |
+| 查看/迁移引擎补丁 | `linux-deploy/patches/apply-engine-patches.sh --check <上游目录>` |
 | 卸载 | `linux-deploy/uninstall.sh` |
 
 > `<ROOT>` 默认是 `~/.local/share/wallpaper-engine-linux`。
@@ -101,16 +105,37 @@ WPE_MAX_RESTARTS="5"              # 崩溃循环保护阈值
 | `--force` | 覆盖已存在的源码 / 配置 / 自启动文件 |
 | `-h` | 帮助 |
 
-## 换机前需要手动的两件事
+## 换机前需要手动的三件事
 
-1. **字体**（微软雅黑/等线，授权原因不在仓库里）—— 见 `system/fonts-README.md`；
-2. **桌面环境**：登录时选 **GNOME on Xorg**（Wayland 下置底方案不生效）。
+1. **克隆前装好 `git-lfs`**：壁纸的音视频素材走 LFS，没装的话会是 130 字节的指针文件
+   （症状：画面正常但没声音、声纹圈不动）。忘了就用 `doctor.sh` 查，修复：
+
+   ```bash
+   sudo apt-get install -y git-lfs && git lfs install && git lfs pull
+   ```
+
+2. **字体**（微软雅黑/等线，授权原因不在仓库里）—— 见 `system/fonts-README.md`；
+3. **桌面环境**：登录时选 **GNOME on Xorg**（Wayland 下置底方案不生效）。
 
 其余（源码、补丁、脚本、自启、配置、日志目录）都由 `install.sh` 自动完成。
+
+## 改了什么（可审查）
+
+这份"能跑"不是黑盒，全部改动都有记录：
+
+| 位置 | 内容 |
+|---|---|
+| `patches/README.md` | **引擎源码的 7 个补丁**（桌面层级、Web 黑屏、CEF zygote、CEF/GL 顺序、GCC 11 编译、音频桥），含症状、原因、做法 |
+| `patches/engine/*.patch` | 可直接 `git apply` 到上游的补丁文件。已核验：**上游 `b016d7d` + 这 7 个补丁 = 归档快照源码，逐字节一致** |
+| `docs/THEME-CHANGES.md` | **壁纸本体（884307090）的定制清单**：CSS/JS 改了哪几行（字体、整组居中、声纹兼容、静音白环）、`project.json` 调了哪些参数 |
+| `system/` | 桌面侧设置快照（GNOME 扩展、纯黑背景、图标大小、字体校验、依赖版本、GPU/显示器） |
 
 ## 文档
 
 - `docs/TROUBLESHOOTING.md` —— 黑屏、盖住桌面图标、音频、字体、编译、省电等问题的排查
+- `docs/THEME-CHANGES.md` —— 壁纸本体的每一处定制（文件 + 行号 + 作用）
+- `docs/MAINTENANCE.md` —— 上游更新后如何迁移补丁、如何刷新设置快照、换机验收清单
+- `patches/README.md` —— 引擎补丁详解与迁移方法
 - `system/README.md` —— 桌面侧配套设置（DING 桌面图标扩展、纯黑背景、图标大小）
 - `../linux-port/README.md` —— 原始归档说明（历史版本）
 
@@ -119,4 +144,5 @@ WPE_MAX_RESTARTS="5"              # 崩溃循环保护阈值
 - **仅 X11**：置底依赖 `_NET_WM_WINDOW_TYPE_DESKTOP` + `XLowerWindow`，Wayland 无等价能力；
 - **分辨率变化后需重启壁纸**：几何信息在启动时确定，不自动跟随；
 - **CEF 首次编译需联网**（`cef-builds.spotifycdn.com`），约 150MB；
-- 源码快照体积较大（18MB 压缩），壁纸素材通过 git-lfs 管理（克隆前请装 `git-lfs`）。
+- **克隆必须带 git-lfs**，否则音视频素材是占位指针（`doctor.sh` 会报出来）；
+- 源码快照体积较大（18MB 压缩），且是冻结版本——想跟上游更新用 `patches/apply-engine-patches.sh` 迁移补丁。

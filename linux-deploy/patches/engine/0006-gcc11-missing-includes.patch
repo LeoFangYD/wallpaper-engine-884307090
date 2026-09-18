@@ -1,0 +1,14 @@
+--- a/src/WallpaperEngine/Media/MediaSource.h
++++ b/src/WallpaperEngine/Media/MediaSource.h
+@@ -1,8 +1,11 @@
+ #pragma once
+ 
+ #include <chrono>
++#include <cstdint>
+ #include <functional>
+ #include <map>
++#include <memory>
++#include <optional>
+ #include <string>
+ 
+ namespace WallpaperEngine::Media {
