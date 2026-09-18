@@ -10,5 +10,5 @@ fonts/*.ttc
 fonts/*.OTF
 fonts/*.otf
 
-# 编译产物
-build/
+# 编译产物（只忽略仓库根目录下的 build/，否则会误伤 linux-deploy/build/ 里的脚本）
+/build/
