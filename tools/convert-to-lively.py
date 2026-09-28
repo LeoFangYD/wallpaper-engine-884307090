@@ -226,6 +226,8 @@ def write_patched_main(source_project: str, target_project: str) -> bool:
 
 
 def write_entry(project_dir: str, original_html: str, patched_main: bool) -> None:
+    # Every step below is guarded so the function is idempotent: re-running it against its own
+    # output must not stack a second adapter tag, a second bootstrap block or a second favicon.
     if "<script src=\"adapter.js\"></script>" not in original_html:
         original_html = original_html.replace(
             '<script src="js/lib/jquery-3.2.1.min.js"></script>',
@@ -233,19 +235,22 @@ def write_entry(project_dir: str, original_html: str, patched_main: bool) -> Non
             1,
         )
 
-    if patched_main:
+    if patched_main and f'src="{PATCHED_MAIN}"' not in original_html:
         original_html = original_html.replace('src="js/main.js"', f'src="{PATCHED_MAIN}"', 1)
 
-    original_html = original_html.replace("</body>", BOOTSTRAP + "</body>", 1)
+    if "Lively bootstrap (added by" not in original_html:
+        original_html = original_html.replace("</body>", BOOTSTRAP + "</body>", 1)
+
     original_html = re.sub(r"<title>.*?</title>",
                            "<title>完美壁纸 (Lively)</title>",
                            original_html, flags=re.S)
     # Lively's WebView2 host asks for /favicon.ico; an explicit empty data: icon keeps that
     # request from turning up as a console error in the debug log.
-    original_html = re.sub(
-        r"(<title>完美壁纸 \(Lively\)</title>\r?\n)",
-        r'\1<link rel="icon" href="data:," />\n',
-        original_html, count=1)
+    if 'rel="icon"' not in original_html:
+        original_html = re.sub(
+            r"(<title>完美壁纸 \(Lively\)</title>\r?\n)",
+            r'\1<link rel="icon" href="data:," />\n',
+            original_html, count=1)
 
     with open(os.path.join(project_dir, ENTRY_FILENAME), "w", encoding="utf-8") as handle:
         handle.write(original_html)
