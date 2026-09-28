@@ -240,6 +240,12 @@ def write_entry(project_dir: str, original_html: str, patched_main: bool) -> Non
     original_html = re.sub(r"<title>.*?</title>",
                            "<title>完美壁纸 (Lively)</title>",
                            original_html, flags=re.S)
+    # Lively's WebView2 host asks for /favicon.ico; an explicit empty data: icon keeps that
+    # request from turning up as a console error in the debug log.
+    original_html = re.sub(
+        r"(<title>完美壁纸 \(Lively\)</title>\r?\n)",
+        r'\1<link rel="icon" href="data:," />\n',
+        original_html, count=1)
 
     with open(os.path.join(project_dir, ENTRY_FILENAME), "w", encoding="utf-8") as handle:
         handle.write(original_html)
