@@ -4,6 +4,9 @@
 壁纸用。本页说明如何把它移植到开源引擎 **[Lively Wallpaper](https://github.com/rocksdanister/lively)**,
 并且**不改动工程里的任何原始文件**。
 
+> 只想照着做:见仓库根的 **[`INSTALL.md`](../INSTALL.md)**,那里有环境要求、逐步安装和自检步骤。
+> 本页偏原理说明。
+
 ![效果](lively/lively-screenshot.jpg)
 
 ## 1. 为什么直接加载会黑屏
@@ -14,7 +17,11 @@
 | --- | --- | --- |
 | 1 | 页面通过 `window.wallpaperPropertyListener.applyUserProperties()` 获取配置,这是 **Wallpaper Engine 专有 API**。没有它,页面停在"未配置"状态。 | 生成 `adapter.js`,把 `project.json` 里 `general.properties.*.value` 的 **132 项作者默认值**喂给页面 |
 | 2 | `js/main.js` 在解析阶段有一段**反盗版校验**:XHR 取 `project.json` 核对 workshop id,不匹配就跳 `error.html`。本地加载时它会让页面卡死(WebView2 无响应、Lively 截图超时)。 | 生成 `js/main-lively.js`,把那一行替换为空操作 |
-| 3 | 页面会自动播放媒体,而本仓库里的 `audio/*.ogg`、`video/*-test.webm` 是 **0 字节占位文件**(作者真正的媒体通过 Steam 创意工坊分发)。 | `index-lively.html` 里的 bootstrap 会移除这些 source,避免 404 |
+| 3 | 页面会自动播放媒体,而本仓库里的 `audio/*.ogg`、`video/*-test.webm` 是 **0 字节占位文件**(作者真正的媒体通过 Steam 创意工坊分发)。 | `index-lively.html` 里的 bootstrap 在运行时执行 `video.removeAttribute('src')` / `audio.removeAttribute('src')` 并隐藏 video,不产生任何请求 |
+
+> 顺带说明:作者自己的 `index.html` 里写的是 `<source src= null>`(一个**非法的属性值**,系笔误)。
+> 本分支把这个值**原样保留**,因为承诺不改动上游文件 —— 它不会被请求,因为 bootstrap 在媒体开始
+> 播放前就把 `src` 属性摘掉了。`tools/verify.py` 检查的正是这条运行时守卫,而不是那两个字符。
 
 ## 2. 一条命令完成转换
 
@@ -36,10 +43,20 @@ python tools/convert-to-lively.py 884307090
 想先看看会生成什么、不动原目录:
 
 ```bash
-python tools/convert-to-lively.py 884307090 --output /tmp/lively-out
+python tools/convert-to-lively.py 884307090 --output D:\tmp\lively-out
 ```
 
-脚本是幂等的,可以反复运行。
+> `--output` 指向一个**空的**目录时,生成的 `LivelyInfo.json` 里 `Thumbnail`/`Preview` 会是 `null`
+> —— 清单只登记项目里已经存在的美术资源。正式使用请就地转换。
+
+脚本是**幂等**的:bootstrap、`adapter.js` 标签、favicon 三处插入都做了存在性判断,反复运行不会重复
+插入。从**全新克隆**(删掉全部生成物)重跑任意次,输出都与已提交的版本逐字节相同。
+
+想确认这一点:
+
+```bash
+python tools/verify.py --convert
+```
 
 ## 3. 装进 Lively
 
@@ -79,5 +96,7 @@ python tools/convert-to-lively.py 884307090 --output /tmp/lively-out
 
 | 路径 | 说明 |
 | --- | --- |
-| `tools/convert-to-lively.py` | 转换脚本(本页所有新增文件都由它生成) |
+| [`../INSTALL.md`](../INSTALL.md) | 任意 Windows 电脑的安装与自检指南 |
+| [`../tools/verify.py`](../tools/verify.py) | 安装前/后的自检脚本(`--convert` 先把文件生成好,`--installed` 附带检查当前壁纸) |
+| [`../tools/convert-to-lively.py`](../tools/convert-to-lively.py) | 转换脚本(本页所有新增文件都由它生成) |
 | `LIVELY.md` | 本文档 |
