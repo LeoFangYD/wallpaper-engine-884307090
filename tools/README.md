@@ -1,9 +1,14 @@
 # tools
 
-| 文件 | 说明 |
-| --- | --- |
-| `verify.py` | **给使用者**:检查这台机器能不能装、装得对不对。见下 |
-| `convert-to-lively.py` | 把 `884307090/` 这个 Wallpaper Engine web 工程转换成 **Lively Wallpaper** 可加载的形式。原理见仓库根的 [`../884307090/LIVELY.md`](../884307090/LIVELY.md) |
+这个目录只有 5 个文件,都是**安装与自证**需要的,没有调试残留。
+
+| 文件 | 给谁用 | 说明 |
+| --- | --- | --- |
+| `verify.py` | **使用者** | 检查这台机器能不能装、装得对不对。见下 |
+| `convert-to-lively.py` | 使用者 / 维护者 | 把工程转换成 **Lively Wallpaper** 可加载的形式。原理见 [`../884307090/LIVELY.md`](../884307090/LIVELY.md) |
+| `README.md` | — | 本文 |
+| `verify_reproducible.py` | 维护者 | 一致性闸门:从全新克隆重跑生成器,产物须同时等于**已部署副本**与**已发布分支** |
+| `verify_running_vs_repo.py` | 维护者(仅本机) | 一致性闸门:本机 Lively 库副本与分支逐 blob 比对。**只在「壁纸正跑在本机且仓库对应那份部署」时有意义,普通克隆里跑不通** |
 
 ## verify.py
 
@@ -51,4 +56,4 @@ python tools/convert-to-lively.py 884307090 --output D:\tmp\lively-out
 | `884307090/LivelyInfo.json` | Lively 项目清单。 |
 | `884307090/lively/` | 库缩略图与预览图。 |
 
-依赖:Python 3.9+;`Pillow` 可选(只用于把缩略图缩小,缺省时会退化为直接复制原图)。
+依赖:Python 3.9+;**无第三方依赖**。`Pillow` 若存在则用于把缩略图缩小,不存在会退化为直接复制原图。
