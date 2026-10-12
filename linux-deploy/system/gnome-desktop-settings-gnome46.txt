@@ -1,0 +1,31 @@
+=== 系统 / 会话（2026-10-12 采集）===
+发行版      : Ubuntu 24.04.5 LTS
+GNOME Shell : 46.0
+会话类型    : X11
+显示器      : HDMI-0 2560x1440（单屏）
+
+=== GNOME Shell 扩展（启用）===
+ding@rastersoft.com                # 桌面图标（GNOME 46 下为独立 Gjs 窗口）
+ubuntu-appindicators@ubuntu.com
+ubuntu-dock@ubuntu.com
+
+=== dconf: 桌面背景（壁纸模式下背景纯黑）===
+color-shading-type='solid'
+primary-color='#000000'
+secondary-color='#000000'
+
+=== dconf: DING 桌面图标扩展 ===
+icon-size='large'
+
+=== 关键差异：DING 窗口与堆叠 ===
+$ xprop -root _NET_CLIENT_LIST_STACKING   # 下 → 上
+  linux-wallpaperengine   _NET_WM_WINDOW_TYPE_DESKTOP   # 壁纸（最底）
+  Gjs                     _NET_WM_WINDOW_TYPE_NORMAL    # 图标（被 fix-icons-layer.sh 降级）
+  ...应用窗口...
+
+修正前：Gjs(DESKTOP) 位于 linux-wallpaperengine(DESKTOP) 之下 → 壁纸盖住图标
+修正后：图标窗口降级为 NORMAL+BELOW → 壁纸 → 图标 → 应用，三层共存
+
+=== 使用方式 ===
+./linux-deploy/scripts/fix-icons-layer.sh          # 一次性
+./linux-deploy/scripts/fix-icons-layer.sh --loop   # 常驻（watchdog 已内置每轮校正）
