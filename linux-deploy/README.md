@@ -1,0 +1,175 @@
+# Wallpaper Engine 动态壁纸 · Ubuntu/GNOME/X11 可移植部署套件
+
+把当前这台 Linux 机器上「能跑的动态壁纸 + 全部配套设置」打包成**换台机器也能一键部署**的形式。
+
+- 壁纸：Wallpaper Engine 创意工坊 **884307090**（纯 Web 壁纸：樱花 + 时钟 + 声纹圆环）
+- 引擎：`linux-wallpaperengine`（已在源码快照里带齐所有补丁与内置子模块）
+- 目标环境：**Ubuntu 22.04+ / GNOME / X11**（NVIDIA 显卡验证通过，AMD/Intel 亦可）
+
+> 旧版 `linux-port/` 目录保留的是**原始归档**（脚本里写死了 `/home/qy/...`，换机不能用）。
+> 本目录 `linux-deploy/` 才是**可直接部署**的版本：零硬编码路径 + 一键安装 + 体检 + 卸载。
+
+---
+
+## 一键部署（新机器）
+
+```bash
+# 先装 git-lfs（音视频素材走 LFS，漏装会没声音）
+sudo apt-get install -y git-lfs
+git clone -b linux-ubuntu2204 https://github.com/LeoFangYD/wallpaper-engine-884307090.git
+cd wallpaper-engine-884307090
+
+# 推荐：装依赖 + 部署 + 编译 + 配置登录自启
+./linux-deploy/install.sh --install-deps --build --autostart
+
+# 没有 sudo / 依赖已装好：只部署，之后再编译
+./linux-deploy/install.sh
+./linux-deploy/build/build-engine.sh
+```
+
+编译完成后：
+
+```bash
+~/.local/share/wallpaper-engine-linux/bin/doctor.sh            # 体检
+~/.local/share/wallpaper-engine-linux/bin/start-wallpaper.sh   # 立即启动
+```
+
+想省掉“每台机器都下载 CEF 再编译”的麻烦，可以在已编译的机器上复用产物：
+
+```bash
+./linux-deploy/install.sh --reuse-build ~/linux-wallpaperengine/build --autostart
+```
+
+---
+
+## 部署后长什么样
+
+```
+~/.local/share/wallpaper-engine-linux/     ← 安装根目录（$WPE_ROOT）
+├── src/               linux-wallpaperengine 源码快照（含补丁 + 内置子模块）
+├── build/             编译产物，可执行文件在 build/output/linux-wallpaperengine
+├── build/output/      运行时需要的 libcef.so / locales / 资源，全部在此
+├── empty-assets/      空 assets 目录（纯 Web 壁纸不需要 Steam assets）
+├── wallpapers/
+│   └── 884307090/     ← 默认软链到仓库里的 884307090/（--copy-wallpaper 则复制）
+├── bin/               start / stop / status / doctor / watchdog + common.sh
+└── log/               engine.log、watchdog.log（超 5MB 自动轮转）
+
+~/.config/wallpaper-engine-linux/wallpaper.conf      ← 机器自适应配置
+~/.config/autostart/linux-wallpaperengine.desktop    ← GNOME 登录自启（可选）
+```
+
+## 常用命令
+
+| 操作 | 命令 |
+|---|---|
+| 启动 | `<ROOT>/bin/start-wallpaper.sh` |
+| 停止（watchdog 不再拉起） | `<ROOT>/bin/stop-wallpaper.sh` |
+| 连 watchdog 一起停 | `<ROOT>/bin/stop-wallpaper.sh --watchdog` |
+| 看状态与日志尾部 | `<ROOT>/bin/status-wallpaper.sh` |
+| 环境体检 | `<ROOT>/bin/doctor.sh` |
+| 编译引擎 | `<ROOT>/bin/build-engine.sh [--clean] [--jobs N]`（仓库内同名脚本在 `linux-deploy/build/`） |
+| 刷新设置快照 | `linux-deploy/system/collect.sh` |
+| 查看/迁移引擎补丁 | `linux-deploy/patches/apply-engine-patches.sh --check <上游目录>` |
+| 卸载 | `linux-deploy/uninstall.sh` |
+
+> `<ROOT>` 默认是 `~/.local/share/wallpaper-engine-linux`。
+
+## 配置：一个文件管全部
+
+`~/.config/wallpaper-engine-linux/wallpaper.conf`（安装时自动生成，带中文注释）。
+优先级：**该文件 > 环境变量 > 脚本内置默认值**。
+
+```bash
+WPE_FPS="60"                      # 30 可省电
+WPE_MONITOR="primary"             # 或 "HDMI-0"，或 "0x0x2560x1440"
+WPE_EXTRA_ARGS=""                 # 例如 "--no-audio-processing"
+WPE_MAX_RESTARTS="5"              # 崩溃循环保护阈值
+```
+
+改完 `stop-wallpaper.sh && start-wallpaper.sh` 生效。所有路径都按安装时的真实位置写好，**换机器不用手改脚本**。
+
+---
+
+## install.sh 参数
+
+| 参数 | 作用 |
+|---|---|
+| `--build` | 部署后立即编译（首次联网下载 CEF，约 10GB 磁盘） |
+| `--autostart` | 安装 GNOME 登录自启（推荐） |
+| `--systemd` | 安装 systemd 用户服务（不自动 enable；X11 环境下不如 GNOME 自启稳） |
+| `--reuse-build DIR` | 复用已有 `build` 目录，跳过编译 |
+| `--copy-wallpaper` | 复制壁纸而非软链（仓库移走后仍可用，多占约 640MB） |
+| `--install-deps` | `sudo apt-get` 安装依赖清单 |
+| `--root DIR` | 自定义安装根目录（默认 `~/.local/share/wallpaper-engine-linux`） |
+| `--force` | 覆盖已存在的源码 / 配置 / 自启动文件 |
+| `-h` | 帮助 |
+
+## 换机前需要手动的三件事
+
+1. **克隆前装好 `git-lfs`**：壁纸的音视频素材走 LFS，没装的话会是 130 字节的指针文件
+   （症状：画面正常但没声音、声纹圈不动）。忘了就用 `doctor.sh` 查，修复：
+
+   ```bash
+   sudo apt-get install -y git-lfs && git lfs install && git lfs pull
+   ```
+
+2. **字体**（微软雅黑/等线，授权原因不在仓库里）—— 见 `system/fonts-README.md`；
+3. **桌面环境**：登录时选 **GNOME on Xorg**（Wayland 下置底方案不生效）。
+
+其余（源码、补丁、脚本、自启、配置、日志目录）都由 `install.sh` 自动完成。
+
+## 改了什么（可审查）
+
+这份"能跑"不是黑盒，全部改动都有记录：
+
+| 位置 | 内容 |
+|---|---|
+| `patches/README.md` | **引擎源码的 7 个补丁**（桌面层级、Web 黑屏、CEF zygote、CEF/GL 顺序、GCC 11 编译、音频桥），含症状、原因、做法 |
+| `patches/engine/*.patch` | 可直接 `git apply` 到上游的补丁文件。已核验：**上游 `b016d7d` + 这 7 个补丁 = 归档快照源码，逐字节一致** |
+| `docs/THEME-CHANGES.md` | **壁纸本体（884307090）的定制清单**：CSS/JS 改了哪几行（字体、整组居中、声纹兼容、静音白环）、`project.json` 调了哪些参数 |
+| `system/` | 桌面侧设置快照（GNOME 扩展、纯黑背景、图标大小、字体校验、依赖版本、GPU/显示器） |
+
+## 文档
+
+- `docs/TROUBLESHOOTING.md` —— 黑屏、盖住桌面图标、音频、字体、编译、省电等问题的排查
+- `docs/THEME-CHANGES.md` —— 壁纸本体的每一处定制（文件 + 行号 + 作用）
+- `docs/MAINTENANCE.md` —— 上游更新后如何迁移补丁、如何刷新设置快照、换机验收清单
+- `patches/README.md` —— 引擎补丁详解与迁移方法
+- `system/README.md` —— 桌面侧配套设置（DING 桌面图标扩展、纯黑背景、图标大小）
+- `../linux-port/README.md` —— 原始归档说明（历史版本）
+
+## 已知限制
+
+- **仅 X11**：置底依赖 `_NET_WM_WINDOW_TYPE_DESKTOP` + `XLowerWindow`，Wayland 无等价能力；
+- **分辨率变化后需重启壁纸**：几何信息在启动时确定，不自动跟随；
+- **CEF 首次编译需联网**（`cef-builds.spotifycdn.com`），约 150MB；
+- **克隆必须带 git-lfs**，否则音视频素材是占位指针（`doctor.sh` 会报出来）；
+- 源码快照体积较大（18MB 压缩），且是冻结版本——想跟上游更新用 `patches/apply-engine-patches.sh` 迁移补丁。
+
+---
+
+## 变更记录
+
+### 2026-10-12 · Ubuntu 24.04.5 LTS (noble) / GNOME Shell 46.0 适配：壁纸 / 图标 / 应用三层共存
+
+| 项目 | 原仓库做法（GNOME 42 验证） | 本次改动（Ubuntu 24.04.5 / GNOME 46.0） |
+|---|---|---|
+| 壁纸窗口被置顶 | 引擎补丁 `0001-desktop-layering-glfw-floating`（`GLFW_FLOATING=FALSE`） | **保留不变**，仍然必需 |
+| 桌面图标由谁绘制 | DING 在 GNOME Shell 内绘制，天然位于引擎窗口之上 | DING 改为**独立进程窗口**（`WM_CLASS=Gjs`，DESKTOP 型） |
+| 结果 | 壁纸 + 图标共存 ✅ | 未适配时：壁纸正常但**图标被盖住** ❌ |
+| 客户端压层尝试 | 无需（`XLowerWindow` 仅作辅助） | 实测无效：`XLowerWindow` / `_NET_WM_STATE_BELOW` 会被 mutter 覆盖 |
+| **新解法** | — | **把图标窗口降级**：类型改 `NORMAL` + `below,skip_taskbar,skip_pager,sticky` |
+| 层级结果 | 引擎 → 图标 → 应用 | 引擎(DESKTOP,最底) → 图标(NORMAL+BELOW) → 应用窗口 ✅ |
+| 生效方式 | `start-wallpaper.sh` 压引擎窗口 | `start-wallpaper.sh` 启动后调用一次 `fix-icons-layer.sh`；`wallpaper-watchdog.sh` 每轮巡检校正 |
+| 桌面设置 | 纯黑背景 + DING `icon-size=large` | 一致（新快照 `system/gnome-desktop-settings-ubuntu2404-gnome46.txt`） |
+
+**新增/修改文件**
+
+| 文件 | 说明 |
+|---|---|
+| `scripts/fix-icons-layer.sh` | **新增**：图标层级校正脚本，支持 `--loop` 常驻守护 |
+| `scripts/start-wallpaper.sh` | 启动完成后调用一次层级校正 |
+| `scripts/wallpaper-watchdog.sh` | 每轮巡检追加层级校正（窗口重建后自动恢复） |
+| `docs/TROUBLESHOOTING.md` | 新增第 4 节：GNOME 46/47 图标被盖住的排查与解法 |
+| `system/gnome-desktop-settings-ubuntu2404-gnome46.txt` | **新增**：GNOME 46 桌面设置快照 |
