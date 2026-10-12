@@ -131,5 +131,11 @@ x11.XCloseDisplay(dpy)
 print("Wallpaper 已降到桌面图标下方")
 PY
 
+
+# GNOME 46+ 适配：把 DING 图标窗口降级, 使壁纸位于图标之下
+if [ -x "$_wpe_dir/fix-icons-layer.sh" ]; then
+    "$_wpe_dir/fix-icons-layer.sh" >>"$WPE_LOG_FILE" 2>&1 || true
+fi
+
 echo "[$(date '+%F %T')] 启动完成 (PID=$PID WID=$WID)" >>"$WPE_LOG_FILE"
 exit 0

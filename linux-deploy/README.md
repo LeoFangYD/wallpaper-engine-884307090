@@ -146,3 +146,30 @@ WPE_MAX_RESTARTS="5"              # 崩溃循环保护阈值
 - **CEF 首次编译需联网**（`cef-builds.spotifycdn.com`），约 150MB；
 - **克隆必须带 git-lfs**，否则音视频素材是占位指针（`doctor.sh` 会报出来）；
 - 源码快照体积较大（18MB 压缩），且是冻结版本——想跟上游更新用 `patches/apply-engine-patches.sh` 迁移补丁。
+
+---
+
+## 变更记录
+
+### 2026-10-12 · Ubuntu 24.04.5 LTS (noble) / GNOME Shell 46.0 适配：壁纸 / 图标 / 应用三层共存
+
+| 项目 | 原仓库做法（GNOME 42 验证） | 本次改动（Ubuntu 24.04.5 / GNOME 46.0） |
+|---|---|---|
+| 壁纸窗口被置顶 | 引擎补丁 `0001-desktop-layering-glfw-floating`（`GLFW_FLOATING=FALSE`） | **保留不变**，仍然必需 |
+| 桌面图标由谁绘制 | DING 在 GNOME Shell 内绘制，天然位于引擎窗口之上 | DING 改为**独立进程窗口**（`WM_CLASS=Gjs`，DESKTOP 型） |
+| 结果 | 壁纸 + 图标共存 ✅ | 未适配时：壁纸正常但**图标被盖住** ❌ |
+| 客户端压层尝试 | 无需（`XLowerWindow` 仅作辅助） | 实测无效：`XLowerWindow` / `_NET_WM_STATE_BELOW` 会被 mutter 覆盖 |
+| **新解法** | — | **把图标窗口降级**：类型改 `NORMAL` + `below,skip_taskbar,skip_pager,sticky` |
+| 层级结果 | 引擎 → 图标 → 应用 | 引擎(DESKTOP,最底) → 图标(NORMAL+BELOW) → 应用窗口 ✅ |
+| 生效方式 | `start-wallpaper.sh` 压引擎窗口 | `start-wallpaper.sh` 启动后调用一次 `fix-icons-layer.sh`；`wallpaper-watchdog.sh` 每轮巡检校正 |
+| 桌面设置 | 纯黑背景 + DING `icon-size=large` | 一致（新快照 `system/gnome-desktop-settings-ubuntu2404-gnome46.txt`） |
+
+**新增/修改文件**
+
+| 文件 | 说明 |
+|---|---|
+| `scripts/fix-icons-layer.sh` | **新增**：图标层级校正脚本，支持 `--loop` 常驻守护 |
+| `scripts/start-wallpaper.sh` | 启动完成后调用一次层级校正 |
+| `scripts/wallpaper-watchdog.sh` | 每轮巡检追加层级校正（窗口重建后自动恢复） |
+| `docs/TROUBLESHOOTING.md` | 新增第 4 节：GNOME 46/47 图标被盖住的排查与解法 |
+| `system/gnome-desktop-settings-ubuntu2404-gnome46.txt` | **新增**：GNOME 46 桌面设置快照 |

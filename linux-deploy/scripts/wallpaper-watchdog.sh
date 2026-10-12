@@ -70,6 +70,11 @@ while true; do
         continue
     fi
 
+    # GNOME 46+ 适配：保持 DING 图标窗口在壁纸之上、应用之下
+    if [ -x "$(dirname "$0")/fix-icons-layer.sh" ]; then
+        "$(dirname "$0")/fix-icons-layer.sh" >/dev/null 2>&1 || true
+    fi
+
     # 2) 壁纸正常运行
     if wpe_engine_running; then
         now=$(date +%s)

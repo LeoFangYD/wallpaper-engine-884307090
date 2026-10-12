@@ -116,3 +116,36 @@ WPE_EXTRA_ARGS="--no-audio-processing" # 关掉音频可视化
 ```
 
 改完 `stop-wallpaper.sh && start-wallpaper.sh` 生效。
+
+---
+
+## 4. Ubuntu 24.04.5 LTS / GNOME Shell 46.0（及 47+）：有壁纸、**没有桌面图标**
+
+**现象**：动态壁纸（樱花/时钟/声纹）正常显示，但桌面图标消失；`wmctrl -l` 能看到
+两个 `_NET_WM_WINDOW_TYPE_DESKTOP` 窗口：一个是 `linux-wallpaperengine`，一个是 `Gjs`。
+
+**原因**：GNOME 42 时代 DING 把桌面图标画在 GNOME Shell 内部（层级在 DESKTOP 型
+X 窗口之上），所以引擎补丁 `0001-desktop-layering-glfw-floating` 就够了。
+**GNOME Shell 46 起 DING 改用独立窗口**（`WM_CLASS=Gjs`，DESKTOP 型），mutter 会把它排在
+壁纸引擎之下 → 壁纸盖住图标。客户端主动压层（`XLowerWindow` / `_NET_WM_STATE_BELOW`）
+会被 mutter 立即覆盖，实测无效。
+
+**解决**（已内置，无需手工）：`scripts/fix-icons-layer.sh` 把**图标窗口降级**为
+普通窗口 + `below`，使层级变为：
+
+```
+壁纸引擎 (DESKTOP, 最底)  →  桌面图标窗口 (NORMAL + BELOW)  →  普通应用窗口
+```
+
+* `scripts/start-wallpaper.sh` 启动后自动调用一次；
+* `scripts/wallpaper-watchdog.sh` 每次巡检都会校正（窗口重建后自动恢复）。
+
+**手工验证**：
+
+```bash
+./linux-deploy/scripts/fix-icons-layer.sh          # 立即修正一次
+./linux-deploy/scripts/fix-icons-layer.sh --loop   # 或常驻守护
+xprop -root _NET_CLIENT_LIST_STACKING | tr ',' '\n'   # 顺序应为 引擎 → Gjs → 应用
+```
+
+**判据**：壁纸在、图标在、应用窗口可正常点击与聚焦（三者互不干扰）。
