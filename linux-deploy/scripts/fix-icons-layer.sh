@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# fix-icons-layer.sh — GNOME 46+ 适配：让「动态壁纸 + 桌面图标 + 应用窗口」三层共存
+# fix-icons-layer.sh — GNOME 46+：让「动态壁纸 / 桌面图标 / 应用窗口」三层稳定共存
 #
-# 背景（为什么需要这个脚本）
-#   * GNOME 42（原验证环境）：DING 桌面图标绘制在 GNOME Shell 内部，
-#     其层级在 DESKTOP 型 X 窗口之上 → 引擎补丁 0001（GLFW_FLOATING=FALSE）
-#     已足够让壁纸位于图标之下。
-#   * GNOME 46/47（Ubuntu 24.04）：DING 改为**独立进程窗口**
-#     （WM_CLASS=Gjs、_NET_WM_WINDOW_TYPE_DESKTOP），mutter 会把它排在
-#     壁纸引擎（同为 DESKTOP 型）之下 → 壁纸盖住图标。
-#     客户端无法把引擎压到它之下（mutter 会立即覆盖堆叠请求，实测有效），
-#     因此改为**把图标窗口降级**：类型改 NORMAL + below/skip_taskbar，
-#     层级变为：  壁纸引擎(DESKTOP, 最底) → 图标窗口(NORMAL,BELOW) → 应用窗口
+# 现象
+#   GNOME 46 起 DING 桌面图标改为独立窗口（WM_CLASS=Gjs）。它与壁纸引擎
+#   （同为全屏窗口）争夺层级：任一方被 mutter 压到下面，就会出现
+#   “有壁纸没图标” 或 “有图标没壁纸”。
+#
+# 稳定方案（本脚本）
+#   把**引擎**放进普通层并置底，图标窗口保持普通层（不 below）：
+#       engine : _NET_WM_WINDOW_TYPE_NORMAL + _NET_WM_STATE_BELOW
+#       icons  : _NET_WM_WINDOW_TYPE_NORMAL              （在引擎之上）
+#       apps   : 普通窗口，聚焦时自然在最上
+#   由 mutter 自身的层规则维持，不再靠“抢层”，窗口重建后自动回到正确顺序。
+#
+# 反面做法（曾导致图标消失，勿用）
+#   给图标窗口加 `below`：它会掉到引擎之下 → 图标再次被壁纸盖住。
 #
 # 用法
-#   fix-icons-layer.sh            # 立即修正一次
-#   fix-icons-layer.sh --loop     # 常驻守护（2 秒巡检，窗口重建后自动修正）
+#   fix-icons-layer.sh            # 修正一次
+#   fix-icons-layer.sh --loop     # 常驻守护（2 秒巡检，推荐由 systemd 托管）
 # ==============================================================================
 set -u
 
@@ -23,46 +27,47 @@ DISP="${DISPLAY:-:1}"
 
 apply_once() {
     DISPLAY="$DISP" python3 - <<'PY'
-import ctypes, re, subprocess, time
+import os, re, subprocess
 
-DISP = __import__("os").environ.get("DISPLAY", ":1")
+D = os.environ.get("DISPLAY", ":1")
 
 def xp(args):
     try:
-        return subprocess.run(["xprop", "-display", DISP] + args,
+        return subprocess.run(["xprop", "-display", D] + args,
+                              capture_output=True, text=True, timeout=3).stdout
+    except Exception:
+        return ""
+
+def wm(args):
+    try:
+        return subprocess.run(["wmctrl"] + args,
                               capture_output=True, text=True, timeout=3).stdout
     except Exception:
         return ""
 
 ids = re.findall(r'0x[0-9a-f]+', xp(["-root", "_NET_CLIENT_LIST_STACKING"]))
-changed = 0
+fixed = 0
 for w in ids:
-    cls = xp(["-id", w, "WM_CLASS"])
-    typ = xp(["-id", w, "_NET_WM_WINDOW_TYPE"])
-    is_icon_window = ('"Gjs"' in cls or '"ding' in cls.lower())
-    if not is_icon_window:
-        continue
-    if "WINDOW_TYPE_NORMAL" in typ:
-        continue
-    # 降级为普通窗口 + 压到普通层底部
-    subprocess.run(["xprop", "-display", DISP, "-id", w,
-                    "-f", "_NET_WM_WINDOW_TYPE", "32a",
-                    "-set", "_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL"],
-                   timeout=3)
-    subprocess.run(["wmctrl", "-i", "-r", w,
-                    "-b", "add,below,skip_taskbar,skip_pager,sticky"], timeout=3)
-    changed += 1
+    cls = xp(["-id", w, "WM_CLASS"]).lower()
+    if "wallpaperengine" in cls:
+        subprocess.run(["xprop", "-display", D, "-id", w,
+                        "-f", "_NET_WM_WINDOW_TYPE", "32a",
+                        "-set", "_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL"], timeout=3)
+        wm(["-i", "-r", w, "-b", "add,below,skip_taskbar,skip_pager,sticky"])
+        fixed += 1
+    elif "gjs" in cls or '"ding' in cls:
+        subprocess.run(["xprop", "-display", D, "-id", w,
+                        "-f", "_NET_WM_WINDOW_TYPE", "32a",
+                        "-set", "_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL"], timeout=3)
+        wm(["-i", "-r", w, "-b", "remove,below"])
+        wm(["-i", "-r", w, "-b", "add,skip_taskbar,skip_pager,sticky"])
+        fixed += 1
 
-print(f"[fix-icons-layer] 已降级 {changed} 个图标窗口" if changed
-      else "[fix-icons-layer] 图标窗口已处于正确层级")
+print(f"[fix-icons-layer] 已校正 {fixed} 个窗口" if fixed else "[fix-icons-layer] 无需校正")
 PY
 }
 
 case "${1:-}" in
-    --loop)
-        while :; do apply_once; sleep 2; done
-        ;;
-    *)
-        apply_once
-        ;;
+    --loop) while :; do apply_once; sleep 2; done ;;
+    *)      apply_once ;;
 esac

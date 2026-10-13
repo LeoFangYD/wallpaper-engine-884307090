@@ -130,11 +130,19 @@ X 窗口之上），所以引擎补丁 `0001-desktop-layering-glfw-floating` 就
 壁纸引擎之下 → 壁纸盖住图标。客户端主动压层（`XLowerWindow` / `_NET_WM_STATE_BELOW`）
 会被 mutter 立即覆盖，实测无效。
 
-**解决**（已内置，无需手工）：`scripts/fix-icons-layer.sh` 把**图标窗口降级**为
-普通窗口 + `below`，使层级变为：
+**解决**（已内置，无需手工）：`scripts/fix-icons-layer.sh` 采用**稳定方案**——把
+**引擎窗口**放进普通层并置底，图标窗口保持普通层（**不加 `below`**）：
 
 ```
-壁纸引擎 (DESKTOP, 最底)  →  桌面图标窗口 (NORMAL + BELOW)  →  普通应用窗口
+engine : _NET_WM_WINDOW_TYPE_NORMAL + _NET_WM_STATE_BELOW   # 贴底
+icons  : _NET_WM_WINDOW_TYPE_NORMAL                          # 在引擎之上
+apps   : 普通窗口，聚焦时自然在最上
+```
+
+层级变为：
+
+```
+壁纸引擎 (NORMAL + BELOW, 最底)  →  桌面图标窗口 (NORMAL)  →  普通应用窗口
 ```
 
 * `scripts/start-wallpaper.sh` 启动后自动调用一次；
@@ -149,3 +157,7 @@ xprop -root _NET_CLIENT_LIST_STACKING | tr ',' '\n'   # 顺序应为 引擎 → 
 ```
 
 **判据**：壁纸在、图标在、应用窗口可正常点击与聚焦（三者互不干扰）。
+
+**踩坑记录（勿用）**：给**图标窗口**加 `_NET_WM_STATE_BELOW` 会把它压到引擎之下，
+表现为"壁纸在、图标又消失"（2026-10-13 实际发生）。正确做法是让**引擎** below，
+图标窗口保持普通层。
