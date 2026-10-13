@@ -159,8 +159,8 @@ WPE_MAX_RESTARTS="5"              # 崩溃循环保护阈值
 | 桌面图标由谁绘制 | DING 在 GNOME Shell 内绘制，天然位于引擎窗口之上 | DING 改为**独立进程窗口**（`WM_CLASS=Gjs`，DESKTOP 型） |
 | 结果 | 壁纸 + 图标共存 ✅ | 未适配时：壁纸正常但**图标被盖住** ❌ |
 | 客户端压层尝试 | 无需（`XLowerWindow` 仅作辅助） | 实测无效：`XLowerWindow` / `_NET_WM_STATE_BELOW` 会被 mutter 覆盖 |
-| **新解法** | — | **把图标窗口降级**：类型改 `NORMAL` + `below,skip_taskbar,skip_pager,sticky` |
-| 层级结果 | 引擎 → 图标 → 应用 | 引擎(DESKTOP,最底) → 图标(NORMAL+BELOW) → 应用窗口 ✅ |
+| **新解法** | — | **引擎置底**：引擎改 `NORMAL` + `below`；图标窗口保持 `NORMAL`（不加 below） |
+| 层级结果 | 引擎 → 图标 → 应用 | 引擎(NORMAL+BELOW,最底) → 图标(NORMAL) → 应用窗口 ✅ |
 | 生效方式 | `start-wallpaper.sh` 压引擎窗口 | `start-wallpaper.sh` 启动后调用一次 `fix-icons-layer.sh`；`wallpaper-watchdog.sh` 每轮巡检校正 |
 | 桌面设置 | 纯黑背景 + DING `icon-size=large` | 一致（新快照 `system/gnome-desktop-settings-ubuntu2404-gnome46.txt`） |
 
@@ -168,7 +168,7 @@ WPE_MAX_RESTARTS="5"              # 崩溃循环保护阈值
 
 | 文件 | 说明 |
 |---|---|
-| `scripts/fix-icons-layer.sh` | **新增**：图标层级校正脚本，支持 `--loop` 常驻守护 |
+| `scripts/fix-icons-layer.sh` | **新增**：层级校正（引擎置底 + 图标窗口普通层），支持 `--loop`；含踩坑说明 |
 | `scripts/start-wallpaper.sh` | 启动完成后调用一次层级校正 |
 | `scripts/wallpaper-watchdog.sh` | 每轮巡检追加层级校正（窗口重建后自动恢复） |
 | `docs/TROUBLESHOOTING.md` | 新增第 4 节：GNOME 46/47 图标被盖住的排查与解法 |
